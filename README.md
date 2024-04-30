@@ -1,0 +1,3 @@
+# Blink IDS
+
+This is intended to be a learning/fun side project for me to explore Intrusion Detection Systems (IDS) in more detail and have some fun while doing so.  This is *not* a production IDS and should not be used in a production environment.  If you're looking for an IDS solution to use, Snort is a great open source IDS, and there are a wide variety of commercial IDS products that are all wonderful.  Use one of those for serious environments.  This one is just for fun and learning.
