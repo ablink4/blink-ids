@@ -2,6 +2,8 @@
 Encapsulates packet data that is ingested from the network and forwarded to the rules engine.
 """
 
+import time
+from datetime import datetime, timezone
 from scapy.all import *
 from scapy.layers.inet import IP, TCP, UDP, ICMP
 from scapy.layers.l2 import Ether
@@ -18,29 +20,28 @@ class PacketData:
         self.packet_id = packet_id
         self.raw_packet = raw_packet
         self.packet_bytes = bytes(raw_packet)
+        self.packet_timestamp = time.time_ns()  # assume packet was received right now - may not be a good assumption
+        self.payload = None
+
         self.ethernet_src = None
         self.ethernet_dst = None
+
         self.ip_src = None
         self.ip_dst = None
         self.ip_protocol = None
+        self.ip_ttl = None
+
         self.tcp_src_port = None
         self.tcp_dest_port = None
+        self.tcp_flags = None
+        self.tcp_seq_num = None
+        self.tcp_ack_num = None
+
         self.udp_src_port = None
         self.udp_dest_port = None
+
         self.icmp_type = None
         self.icmp_code = None
-        self.ip_ttl = None
-        self.tcp_seq = None
-        self.tcp_ack = None
-
-        # TODO: add these (or remove, if unneeded)
-        self.packet_direction = None
-        self.packet_timestamp = None
-        self.packet_flags = None
-        self.packet_checksum = None
-        self.packet_window = None
-        self.packet_urgent = None
-        self.packet_options = None
 
         self._extract_packet_data()
 
@@ -49,22 +50,38 @@ class PacketData:
         Return a string representation of the PacketData object.
         """
         output = f"Packet ID: {self.packet_id}\n"
-        output += f"Ethernet Source: {self.ethernet_src}\n"
-        output += f"Ethernet Destination: {self.ethernet_dst}\n"
-        output += f"IP Source: {self.ip_src}\n"
-        output += f"IP Destination: {self.ip_dst}\n"
-        output += f"IP Protocol: {self.ip_protocol}\n"
+
+        dt = datetime.fromtimestamp(self.packet_timestamp / 1_000_000_000)
+        output += f"Packet Timestamp: {dt.strftime('%Y-%m-%d %H:%M:%S.%f')}\n"
+
+        output += "Ethernet Data:"
+        output += f"\tEthernet Source: {self.ethernet_src}\n"
+        output += f"\tEthernet Destination: {self.ethernet_dst}\n"
+
+        output += "IP Data:"
+        output += f"\tIP Source: {self.ip_src}\n"
+        output += f"\tIP Destination: {self.ip_dst}\n"
+        output += f"\tIP Protocol: {self.ip_protocol}\n"
+        output += f"\tIP TTL: {self.ip_ttl}\n"
 
         if self.tcp_src_port is not None:
-            output += f"TCP Source Port: {self.tcp_src_port}\n"
-            output += f"TCP Destination Port: {self.tcp_dest_port}\n"
+            output += "TCP Data:"
+            output += f"\tTCP Source Port: {self.tcp_src_port}\n"
+            output += f"\tTCP Destination Port: {self.tcp_dest_port}\n"
+            output += f"\tTCP Flags: {self.tcp_flags}\n"
+            output += f"\tTCP Sequence Number: {self.tcp_seq_num}\n"
+            output += f"\tTCP Acknowledgement Number: {self.tcp_ack_num}\n"
         elif self.udp_src_port is not None:
-            output += f"UDP Source Port: {self.udp_src_port}\n"
-            output += f"UDP Destination Port: {self.udp_dest_port}\n"
+            output += "UDP Data:"
+            output += f"\tUDP Source Port: {self.udp_src_port}\n"
+            output += f"\tUDP Destination Port: {self.udp_dest_port}\n"
 
-        output += f"Packet Direction: {self.packet_direction}\n"
-        output += f"Packet Urgent: {self.packet_urgent}\n"
+        if self.icmp_type is not None:
+            output += "ICMP Data:"
+            output += f"\tICMP Type: {self.icmp_type}\n"
+            output += f"\tICMP Code: {self.icmp_code}\n"
 
+        output += f"Packet Payload: {self.payload}\n"
         output += f"Packet Bytes: {self.packet_bytes}\n"
 
         return output
@@ -73,6 +90,10 @@ class PacketData:
         """
         Extract and parse the various layers of data from the raw packet.
         """
+
+        if self.raw_packet.haslayer(Raw):
+            self.payload = self.raw_packet.getlayer(Raw).load
+
         # Extract Ethernet frame data
         if self.raw_packet.haslayer(Ether):
             self.ethernet_src = self.raw_packet[Ether].src
@@ -93,8 +114,9 @@ class PacketData:
         if self.raw_packet.haslayer(TCP):
             self.tcp_src_port = self.raw_packet[TCP].sport
             self.tcp_dest_port = self.raw_packet[TCP].dport
-            self.tcp_seq = self.raw_packet[TCP].seq
-            self.tcp_ack = self.raw_packet[TCP].ack
+            self.tcp_seq_num = self.raw_packet[TCP].seq
+            self.tcp_ack_num = self.raw_packet[TCP].ack
+            self.tcp_flags = self.raw_packet[TCP].flags
         elif self.raw_packet.haslayer(UDP):
             self.udp_src_port = self.raw_packet[UDP].sport
             self.udp_dest_port = self.raw_packet[UDP].dport
