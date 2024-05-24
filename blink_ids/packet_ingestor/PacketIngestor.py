@@ -5,9 +5,9 @@ relevant to analysis, and forwarding to the rules engine module.
 """
 
 from scapy.all import *
-from src.packet_data.PacketData import PacketData
+from blink_ids.packet_data.PacketData import PacketData
 
-from src.packet_queue.PacketQueue import PacketQueue
+from blink_ids.packet_queue.PacketQueue import PacketQueue
 
 
 class PacketIngestor():

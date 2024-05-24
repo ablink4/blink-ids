@@ -1,12 +1,14 @@
 """
 Top-level module for blink-ids.
 """
+
 import threading
 import argparse
 
-from packet_ingestor import PacketIngestor
-from packet_queue import PacketQueue
-from rule_parser import rule_parser
+from blink_ids.logging_config.logging_config import logger
+from blink_ids.packet_ingestor import PacketIngestor
+from blink_ids.packet_queue import PacketQueue
+from blink_ids.rule_parser import rule_parser
 
 
 def run(queue: PacketQueue):
@@ -20,7 +22,7 @@ def consume(queue: PacketQueue):
     """""
     while True:
         packet = queue.get()
-        print(packet)
+        logger.info(packet)
 
 
 if __name__ == "__main__":

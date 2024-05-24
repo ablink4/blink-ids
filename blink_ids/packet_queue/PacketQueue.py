@@ -5,7 +5,7 @@ the packet ingestor to the rules engine.
 from queue import LifoQueue, Full, Empty
 from typing import Optional
 
-from src.packet_data.PacketData import PacketData
+from blink_ids.packet_data.PacketData import PacketData
 
 
 class PacketQueue:
